@@ -15,7 +15,6 @@ function getElementByClassNamePart(tagName, classNamePart) {
 function clickCardNext(classNamePart) {
     var div = getElementByClassNamePart("a", classNamePart);
     if (div) {
-        alert(div.innerHTML);
         div.click();
         return true;    
     }

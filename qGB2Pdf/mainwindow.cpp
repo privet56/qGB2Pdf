@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "def.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -30,8 +31,8 @@ void MainWindow::on_eGbUrl_returnPressed()
 void MainWindow::on_bConvert_clicked()
 {
     m_pGbWorker = new GbWorker(this, this->ui->webEngineView);
-    connect(this->m_pGbWorker, SIGNAL(scrapFinished(QString)), this, SLOT(on_loadFinished(bool)));
-    m_pGbWorker->on_loadFinished(true);
+    connect(this->m_pGbWorker, SIGNAL(scrapFinished(QString)), this, SLOT(scrapFinished(QString)));
+    m_pGbWorker->startScrapingWithCurrentPage();
 }
 
 void MainWindow::on_eGbUrl_textChanged(const QString &gbUrl)
@@ -60,6 +61,9 @@ void MainWindow::scrapFinished(QString sFN)
     disconnect(this->m_pGbWorker, SIGNAL(scrapFinished(QString)), this, SLOT(on_loadFinished(bool)));
     this->m_pGbWorker->deleteLater();
     this->m_pGbWorker = nullptr;
+
+    QString sUrl(this->ui->eGbUrl->text());
+    this->on_eGbUrl_textChanged(sUrl);
 }
 
 //TODO: no [x] when working!

@@ -4,9 +4,6 @@
 #include <QMainWindow>
 #include "gbworker.h"
 
-#define __pageContaner QString("pageContainer")
-#define __cardNext QString("cardNext")
-
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE

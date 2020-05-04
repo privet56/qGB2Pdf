@@ -4,15 +4,22 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
+#include "def.h"
+#include "util/str.h"
 
-GbWorker::GbWorker(QObject *parent, QWebEngineView* pWebEngineView) : QObject(parent), m_pWebEngineView(pWebEngineView)
+GbWorker::GbWorker(QObject *parent, QWebEngineView* pWebEngineView) : QObject(parent), m_pWebEngineView(pWebEngineView), m_iPage(9)
 {
+
+}
+void GbWorker::startScrapingWithCurrentPage()
+{
+    m_iPage = 0;
     connect(this->m_pWebEngineView, SIGNAL(loadFinished(bool)), this, SLOT(on_loadFinished(bool)));
 
     {   // fill m_sgb2pdf_js
         QFile file(":/res/gb2pdf.js");
         if(!file.open(QIODevice::ReadOnly)) {
-            qDebug()<<"ERR: :/res/gb2pdf.js file not opened" << endl;
+            qDebug() << "ERR: :/res/gb2pdf.js file not opened" << endl;
         }
         else
         {
@@ -20,31 +27,81 @@ GbWorker::GbWorker(QObject *parent, QWebEngineView* pWebEngineView) : QObject(pa
         }
         file.close();
     }
-    {
+    {   //open temporary file
         QDir dir(QDir::tempPath());
         QString sSubDir = QString::number(QCoreApplication::applicationPid());
         if(!dir.mkdir(sSubDir))  {
-            qDebug()<<"ERR: !mkdir: " << sSubDir << endl;
+            qDebug() << "ERR: !mkdir: " << sSubDir << endl;
         }
-        m_sScrapedFN = QDir::tempPath() + QDir::separator() + sSubDir + QDir::separator() + QString::number(QDateTime::currentMSecsSinceEpoch()) + ".htm";
+        m_sScrapedFN = str::makeAbsFN(QDir::tempPath(), sSubDir);
+        m_sScrapedFN = str::makeAbsFN(m_sScrapedFN, QString::number(QDateTime::currentMSecsSinceEpoch()) + ".htm");
+        m_fScrapedContent.setFileName(m_sScrapedFN);
         if(!m_fScrapedContent.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
-            qDebug()<<"ERR: !open: " << m_sScrapedFN << endl;
+            qDebug() << "ERR: !open: " << m_sScrapedFN << endl;
         }
+        m_sScrapedContent.setDevice(&m_fScrapedContent);
     }
+
+    this->m_pWebEngineView->page()->toHtml([this](QString sHtml)
+    {
+        QString shtml(sHtml.toLower());
+        int iBody = shtml.indexOf("<body");
+        QString sHead = sHtml.left(iBody);
+        m_sScrapedContent << sHead;
+
+        on_loadFinished(true);
+    });
+}
+
+void GbWorker::endScraping()
+{
+    this->m_sScrapedContent.flush();
+    this->m_fScrapedContent.close();
+    disconnect(this->m_pWebEngineView, SIGNAL(loadFinished(bool)), this, SLOT(on_loadFinished(bool)));
+    emit scrapFinished(this->m_sScrapedFN);
 }
 
 void GbWorker::on_loadFinished(bool ok)
 {
-    Q_UNUSED(ok);
+    if (!ok) {
+        qDebug() << "WRN: !ok: " << this->m_pWebEngineView->url() << endl;
+        this->endScraping();
+        return;
+    }
 
+    m_iPage++;
     this->m_pWebEngineView->page()->runJavaScript(m_sgb2pdf_js);
 
-    this->m_pWebEngineView->page()->runJavaScript("getPageContainer('--pageContainer-');", [this](const QVariant &v) {
+    //TODO: def js function name
+    this->m_pWebEngineView->page()->runJavaScript("getPageContainer('" + __pageContaner + "');", [this](const QVariant &v) {
         QString pageContainer = v.toString();
-        QTextStream stream(&this->m_fScrapedContent);
-        stream << "\n<!-- page-begin -->\n";
-        stream << pageContainer;
-        stream << "\n<!-- page-end -->\n";
-    });
+        m_sScrapedContent << "\n<!-- page-begin ("  + QString::number(m_iPage) + ") -->\n";
+        m_sScrapedContent << pageContainer;
+        m_sScrapedContent << "\n<!-- page-end ("  + QString::number(m_iPage) + ") -->\n";
 
+        //TODO: remove this code
+        if (m_iPage > 3)
+        {
+            qDebug() << "WRN: !ok: " << this->m_pWebEngineView->url() << endl;
+            this->endScraping();
+            return;
+        }
+        else
+        {
+            this->clickNextPage();
+        }
+    });
+}
+void GbWorker::clickNextPage()
+{
+    //TODO: def js function name
+    this->m_pWebEngineView->page()->runJavaScript("clickCardNext('" + __cardNext + "');", [this](const QVariant &v) {
+        bool clicked = v.toBool();
+        if (!clicked)
+        {
+            qDebug() << "INF: endScaping: " << this->m_pWebEngineView->url() << endl;
+            this->endScraping();
+            return;
+        }
+    });
 }
