@@ -25,7 +25,6 @@ protected:
 
     int m_iPage;
 
-    void clickNextPage();
     void endScraping();
 
 public:
@@ -33,6 +32,9 @@ public:
 
 public slots:
     void on_loadFinished(bool ok);
+    void clickNextPage();
+    void on_loadStarted();
+    void on_loadProgress(int progress);
 
 signals:
     void scrapFinished(QString sFN);

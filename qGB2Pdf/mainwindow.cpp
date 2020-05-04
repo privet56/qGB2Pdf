@@ -75,10 +75,13 @@ void MainWindow::on_eGbUrl_textChanged(const QString &gbUrl)
 
 void MainWindow::on_loadFinished(bool ok)
 {
-    m_logger.inf("mainwindow: ok: " + this->ui->webEngineView->url().toString());
+    m_logger.inf("mainwindow: ok(" + QString::number(ok) + "): " + this->ui->webEngineView->url().toString());
 
-    if (!ok || this->m_pGbWorker) {
+    //TODO: progress>99 -> stop  -> should be ok
+    if (/*!ok || */this->m_pGbWorker) {
         this->ui->bConvert->setEnabled(false);
+        if (!ok)
+            this->m_logger.log("mainwindow: load !ok: " + this->ui->webEngineView->url().toString(), logger::LogLevel::WRN);
         return;
     }
     //TODO: move this logic into GbWorker!?
@@ -107,12 +110,14 @@ void MainWindow::scrapFinished(QString sFN)
 
 void MainWindow::on_loadStarted()
 {
-    this->m_logger.log("mainwindow: Loading... ", logger::LogLevel::INF);
+    //this->m_logger.log("mainwindow: Loading... ", logger::LogLevel::INF);
 }
 
 void MainWindow::on_loadProgress(int progress)
 {
-    this->m_logger.log("mainwindow: Loading... " + QString::number(progress) + "%", logger::LogLevel::INF);
+    if (progress > 99)
+        this->ui->webEngineView->stop();
+    //this->m_logger.log("mainwindow: Loading... " + QString::number(progress) + "%", logger::LogLevel::INF);
 }
 
 void MainWindow::on_urlChanged(QUrl url)

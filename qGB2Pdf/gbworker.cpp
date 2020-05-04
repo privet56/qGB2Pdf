@@ -4,6 +4,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
+#include <QTimer>
 #include "def.h"
 #include "util/str.h"
 
@@ -18,6 +19,9 @@ void GbWorker::startScrapingWithCurrentPage()
 {
     m_iPage = 0;
     connect(this->m_pWebEngineView, SIGNAL(loadFinished(bool)), this, SLOT(on_loadFinished(bool)));
+    connect(this->m_pWebEngineView, SIGNAL(loadStarted()), this, SLOT(on_loadStarted()));
+    connect(this->m_pWebEngineView, SIGNAL(loadProgress(int)), this, SLOT(on_loadProgress(int)));
+
 
     {   // fill m_sgb2pdf_js
         QFile file(":/res/gb2pdf.js");
@@ -63,14 +67,16 @@ void GbWorker::endScraping()
     this->m_fScrapedContent.close();
     disconnect(this->m_pWebEngineView, SIGNAL(loadFinished(bool)), this, SLOT(on_loadFinished(bool)));
     emit scrapFinished(this->m_sScrapedFN);
+    //TODO: convert local collected html to PDF!
 }
 
 void GbWorker::on_loadFinished(bool ok)
 {
     if (!ok) {
         m_pLogger->wrn("gbWorker: !ok: " + this->m_pWebEngineView->url().toString());
-        this->endScraping();
-        return;
+        //TODO: progress>99 -> stop  -> should be ok
+        //this->endScraping();
+        //return;
     }
 
     m_iPage++;
@@ -79,6 +85,7 @@ void GbWorker::on_loadFinished(bool ok)
     m_pLogger->inf("gbWorker: ok & js injected: " + this->m_pWebEngineView->url().toString());
 
     //TODO: def js function name
+    //TODO: getPageContainer should get the innerHTML of the first child!
     this->m_pWebEngineView->page()->runJavaScript("getPageContainer('" + __pageContaner + "');", [this](const QVariant &v) {
         QString pageContainer = v.toString();
         m_sScrapedContent << "\n<!-- page-begin ("  + QString::number(m_iPage) + ") -->\n";
@@ -96,19 +103,21 @@ void GbWorker::on_loadFinished(bool ok)
         }
         else*/
         {
-            this->clickNextPage();
+            QTimer::singleShot(999, this, SLOT(clickNextPage()));
+            //this->clickNextPage();
         }
     });
 }
 
 void GbWorker::clickNextPage()
 {
+    m_pLogger->inf("gbWorker: trying to click next: " + this->m_pWebEngineView->url().toString());
     //TODO: def js function name
     this->m_pWebEngineView->page()->runJavaScript("clickCardNext('" + __cardNext + "');", [this](const QVariant &v) {
         bool clicked = v.toBool();
         if (!clicked)
         {
-            m_pLogger->inf("gbWorker: end scraping: " + this->m_pWebEngineView->url().toString());
+            m_pLogger->inf("gbWorker:clickNextPage -> no next link -> end scraping: " + this->m_pWebEngineView->url().toString());
             this->endScraping();
             return;
         }
@@ -117,4 +126,15 @@ void GbWorker::clickNextPage()
             m_pLogger->inf("gbWorker: next link clicked: " + this->m_pWebEngineView->url().toString());
         }
     });
+}
+void GbWorker::on_loadStarted()
+{
+    m_pLogger->log("gbWorker: Loading... ", logger::LogLevel::INF);
+}
+
+void GbWorker::on_loadProgress(int progress)
+{
+    if (progress > 99)
+        this->m_pWebEngineView->stop();
+    m_pLogger->log("gbWorker: Loading... " + QString::number(progress) + "%", logger::LogLevel::INF);
 }
