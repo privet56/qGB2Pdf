@@ -40,9 +40,10 @@ private slots:
 
     void scrapFinished(QString sFN);
 
-    void loadStarted();
+    void on_loadStarted();
 
-    void loadProgress(int progress);
+    void on_loadProgress(int progress);
+    void on_urlChanged(QUrl url);
 
 private:
     Ui::MainWindow *ui;
