@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/">
+        <file>res/gb.png</file>
+        <file>res/gb2pdf.js</file>
+    </qresource>
+</RCC>

@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "gbworker.h"
 
 #define __pageContaner QString("pageContainer")
 #define __cardNext QString("cardNext")
@@ -18,6 +19,9 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+protected:
+    GbWorker* m_pGbWorker;
+
 private slots:
     void on_eGbUrl_returnPressed();
 
@@ -26,6 +30,8 @@ private slots:
     void on_eGbUrl_textChanged(const QString &arg1);
 
     void on_loadFinished(bool ok);
+
+    void scrapFinished(QString sFN);
 
 private:
     Ui::MainWindow *ui;
