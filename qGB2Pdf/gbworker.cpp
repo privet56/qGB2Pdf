@@ -11,7 +11,7 @@
 GbWorker::GbWorker(QObject *parent, QWebEngineView* pWebEngineView, logger* pLogger) : QObject(parent)
   , m_pLogger(pLogger)
   , m_pWebEngineView(pWebEngineView)
-  , m_iPage(9)
+  , m_iPage(0)
 {
 
 }
@@ -19,9 +19,8 @@ void GbWorker::startScrapingWithCurrentPage()
 {
     m_iPage = 0;
     connect(this->m_pWebEngineView, SIGNAL(loadFinished(bool)), this, SLOT(on_loadFinished(bool)));
-    connect(this->m_pWebEngineView, SIGNAL(loadStarted()), this, SLOT(on_loadStarted()));
-    connect(this->m_pWebEngineView, SIGNAL(loadProgress(int)), this, SLOT(on_loadProgress(int)));
-
+    connect(this->m_pWebEngineView, SIGNAL(loadStarted()),      this, SLOT(on_loadStarted()));
+    connect(this->m_pWebEngineView, SIGNAL(loadProgress(int)),  this, SLOT(on_loadProgress(int)));
 
     {   // fill m_sgb2pdf_js
         QFile file(":/res/gb2pdf.js");
@@ -56,6 +55,7 @@ void GbWorker::startScrapingWithCurrentPage()
         int iBody = shtml.indexOf("<body");
         QString sHead = sHtml.left(iBody);
         m_sScrapedContent << sHead;
+        m_sScrapedContent << "\n<body>";
 
         on_loadFinished(true);
     });
@@ -63,11 +63,12 @@ void GbWorker::startScrapingWithCurrentPage()
 
 void GbWorker::endScraping()
 {
+    //TODO: close body & html
     this->m_sScrapedContent.flush();
     this->m_fScrapedContent.close();
     disconnect(this->m_pWebEngineView, SIGNAL(loadFinished(bool)), this, SLOT(on_loadFinished(bool)));
     emit scrapFinished(this->m_sScrapedFN);
-    //TODO: convert local collected html to PDF!
+    //TODO: convert local collected html to PDF! with wkhtmlto... lib or dll.!?
 }
 
 void GbWorker::on_loadFinished(bool ok)

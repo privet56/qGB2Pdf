@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent)
         this->ui->splitter->setSizes(sizes);
     }*/
 
+    //TODO: log also onto statusbar
     this->m_logger.init(&this->m_cfg, this->ui->logWindow);
 
     QString sUrl(this->ui->eGbUrl->text());
@@ -116,7 +117,10 @@ void MainWindow::on_loadStarted()
 void MainWindow::on_loadProgress(int progress)
 {
     if (progress > 99)
+    {
+        //TODO: instead of stopping, setup timer and stop on expiring (or abandon timer if loadFinished faster)
         this->ui->webEngineView->stop();
+    }
     //this->m_logger.log("mainwindow: Loading... " + QString::number(progress) + "%", logger::LogLevel::INF);
 }
 
