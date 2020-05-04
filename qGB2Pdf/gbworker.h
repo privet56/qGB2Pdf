@@ -4,12 +4,17 @@
 #include <QFile>
 #include <QObject>
 #include <QWebEngineView>
+#include "util/cfg.h"
+#include "util/logger.h"
 
 class GbWorker : public QObject
 {
     Q_OBJECT
 public:
-    explicit GbWorker(QObject *parent, QWebEngineView* pWebEngineView);
+    explicit GbWorker(QObject *parent, QWebEngineView* pWebEngineView, logger* pLogger);
+
+protected:
+    logger* m_pLogger;
 
 protected:
     QWebEngineView* m_pWebEngineView;

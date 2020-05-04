@@ -2,17 +2,45 @@
 #include "ui_mainwindow.h"
 #include "def.h"
 
+#include <QCloseEvent>
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
     , m_pGbWorker(nullptr)
+    , m_logger(nullptr, nullptr, this)
+    , m_cfg(this)
+    , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    //TODO: use splitter!
+    /*{
+        QList<int> sizes;
+        sizes << 9; //top area
+        sizes << 1; //bottom area (log wnd)
+        this->ui->splitter->setSizes(sizes);
+    }*/
+
+    this->m_logger.init(&this->m_cfg, this->ui->logWindow);
+
     QString sUrl(this->ui->eGbUrl->text());
     on_eGbUrl_textChanged(sUrl);
     if (sUrl.length() > 3)
         on_eGbUrl_returnPressed();
     connect(this->ui->webEngineView, SIGNAL(loadFinished(bool)), this, SLOT(on_loadFinished(bool)));
+    connect(this->ui->webEngineView, SIGNAL(loadStarted()), this, SLOT(on_loadStarted()));
+    connect(this->ui->webEngineView, SIGNAL(loadProgress(int)), this, SLOT(on_loadProgress(int)));
+}
+
+void MainWindow::closeEvent(QCloseEvent *evt)
+{
+    if (!this->m_pGbWorker) {
+       evt->accept();
+    } else {
+        this->m_logger.log("Working ... cannot close!", logger::LogLevel::WRN);
+        evt->accept();
+        //evt->ignore();    // TODO allow/disallow forced close
+    }
 }
 
 MainWindow::~MainWindow()
@@ -30,9 +58,10 @@ void MainWindow::on_eGbUrl_returnPressed()
 
 void MainWindow::on_bConvert_clicked()
 {
-    m_pGbWorker = new GbWorker(this, this->ui->webEngineView);
+    m_pGbWorker = new GbWorker(this, this->ui->webEngineView, &this->m_logger);
     connect(this->m_pGbWorker, SIGNAL(scrapFinished(QString)), this, SLOT(scrapFinished(QString)));
     m_pGbWorker->startScrapingWithCurrentPage();
+    this->ui->bConvert->setEnabled(false);
 }
 
 void MainWindow::on_eGbUrl_textChanged(const QString &gbUrl)
@@ -52,19 +81,34 @@ void MainWindow::on_loadFinished(bool ok)
     {
         bool gbPage = html.indexOf(__pageContaner) > 9 && html.indexOf(__cardNext) > 9;
         this->ui->bConvert->setEnabled(gbPage);
+        if (!gbPage) this->m_logger.log("URL not supported", logger::LogLevel::WRN);
     });
 }
 
 void MainWindow::scrapFinished(QString sFN)
 {
-    qDebug() << sFN << "\n FINISHED";
+    this->m_logger.log("FINISH: " + sFN, logger::LogLevel::INF);
     disconnect(this->m_pGbWorker, SIGNAL(scrapFinished(QString)), this, SLOT(on_loadFinished(bool)));
     this->m_pGbWorker->deleteLater();
     this->m_pGbWorker = nullptr;
 
     QString sUrl(this->ui->eGbUrl->text());
     this->on_eGbUrl_textChanged(sUrl);
+
+    this->ui->tabWidget->setCurrentIndex(1);
+    this->ui->webEngineViewOffline->setUrl(QUrl(sFN));
 }
 
+void MainWindow::loadStarted()
+{
+    this->m_logger.log("Loading... ", logger::LogLevel::INF);
+}
+
+void MainWindow::loadProgress(int progress)
+{
+    this->m_logger.log("Loading... " + QString::number(progress) + "%", logger::LogLevel::INF);
+}
+
+
 //TODO: no [x] when working!
-//TODO: disable edit, show wait icon when working!
+//TODO: disable edit, show wait icon animation when working!

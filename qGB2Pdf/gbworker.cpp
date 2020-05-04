@@ -7,7 +7,10 @@
 #include "def.h"
 #include "util/str.h"
 
-GbWorker::GbWorker(QObject *parent, QWebEngineView* pWebEngineView) : QObject(parent), m_pWebEngineView(pWebEngineView), m_iPage(9)
+GbWorker::GbWorker(QObject *parent, QWebEngineView* pWebEngineView, logger* pLogger) : QObject(parent)
+  , m_pLogger(pLogger)
+  , m_pWebEngineView(pWebEngineView)
+  , m_iPage(9)
 {
 
 }
@@ -19,7 +22,8 @@ void GbWorker::startScrapingWithCurrentPage()
     {   // fill m_sgb2pdf_js
         QFile file(":/res/gb2pdf.js");
         if(!file.open(QIODevice::ReadOnly)) {
-            qDebug() << "ERR: :/res/gb2pdf.js file not opened" << endl;
+            //should never happen, as file is in resources
+            m_pLogger->err(":/res/gb2pdf.js file not opened");
         }
         else
         {
@@ -31,13 +35,13 @@ void GbWorker::startScrapingWithCurrentPage()
         QDir dir(QDir::tempPath());
         QString sSubDir = QString::number(QCoreApplication::applicationPid());
         if(!dir.mkdir(sSubDir))  {
-            qDebug() << "ERR: !mkdir: " << sSubDir << endl;
+            m_pLogger->err("!mkdir: " + sSubDir);
         }
         m_sScrapedFN = str::makeAbsFN(QDir::tempPath(), sSubDir);
         m_sScrapedFN = str::makeAbsFN(m_sScrapedFN, QString::number(QDateTime::currentMSecsSinceEpoch()) + ".htm");
         m_fScrapedContent.setFileName(m_sScrapedFN);
         if(!m_fScrapedContent.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
-            qDebug() << "ERR: !open: " << m_sScrapedFN << endl;
+            m_pLogger->err("!open: " + m_sScrapedFN);
         }
         m_sScrapedContent.setDevice(&m_fScrapedContent);
     }
@@ -64,7 +68,7 @@ void GbWorker::endScraping()
 void GbWorker::on_loadFinished(bool ok)
 {
     if (!ok) {
-        qDebug() << "WRN: !ok: " << this->m_pWebEngineView->url() << endl;
+        m_pLogger->wrn("!ok: " + this->m_pWebEngineView->url().toString());
         this->endScraping();
         return;
     }
@@ -79,19 +83,22 @@ void GbWorker::on_loadFinished(bool ok)
         m_sScrapedContent << pageContainer;
         m_sScrapedContent << "\n<!-- page-end ("  + QString::number(m_iPage) + ") -->\n";
 
-        //TODO: remove this code
+        m_pLogger->inf("scraping page" + QString::number(m_iPage) + ", " + this->m_pWebEngineView->url().toString());
+
+        /*TODO: remove this code
         if (m_iPage > 3)
         {
-            qDebug() << "WRN: !ok: " << this->m_pWebEngineView->url() << endl;
+            m_pLogger->wrn("breaking: " + this->m_pWebEngineView->url().toString());
             this->endScraping();
             return;
         }
-        else
+        else*/
         {
             this->clickNextPage();
         }
     });
 }
+
 void GbWorker::clickNextPage()
 {
     //TODO: def js function name
@@ -99,7 +106,7 @@ void GbWorker::clickNextPage()
         bool clicked = v.toBool();
         if (!clicked)
         {
-            qDebug() << "INF: endScaping: " << this->m_pWebEngineView->url() << endl;
+            m_pLogger->inf("end scraping: " + this->m_pWebEngineView->url().toString());
             this->endScraping();
             return;
         }
