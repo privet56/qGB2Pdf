@@ -1,6 +1,7 @@
 function log(s) {
     //alert(s);
     console.log(s);
+    return s;
 }
 function getElementByClassNamePart(tagName, classNamePart) {
     var divs = document.getElementsByTagName(tagName);
@@ -18,14 +19,22 @@ function clickCardNext(classNamePart) {
         div.click();
         return true;    
     }
-    log("div not found with class '" + classNamePart + "'");
+    log("INF: div not found with class '" + classNamePart + "'");
     return false;
 }
 function getPageContainer(classNamePart) {
     var div = getElementByClassNamePart("div", classNamePart);
-    if (div) return div.innerHTML;
-    log("div not found with class '" + classNamePart + "'");
-    return null;
+    var s = null;
+    if (div)
+    {
+        s = div.firstChild.innerHTML;
+        if(!s)
+            s = div.innerHTML;
+        if (s) {
+            return s + "<!-- cnt-end -->";
+        }
+    }
+    return log("WRN: content not found class:'" + classNamePart + "' div:'"+div+"' s:'"+s+"' url:" + window.location.href);
 }
 //alert(getPageContainer("--pageContainer-"));
 //alert(clickCardNext("--cardNext-"));

@@ -18,6 +18,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     def.cpp \
     gbworker.cpp \
+    gbwriter.cpp \
     main.cpp \
     mainwindow.cpp \
     util/anibutton.cpp \
@@ -35,6 +36,7 @@ SOURCES += \
 HEADERS += \
     def.h \
     gbworker.h \
+    gbwriter.h \
     mainwindow.h \
     res.rc \
     resource.h \

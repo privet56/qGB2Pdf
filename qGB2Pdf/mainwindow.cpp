@@ -71,32 +71,33 @@ void MainWindow::on_bConvert_clicked()
 void MainWindow::on_eGbUrl_textChanged(const QString &gbUrl)
 {
     if (m_pGbWorker) return;
+    //TODO: do it in the reactive way! (RxQt?)
     this->ui->bConvert->setEnabled(gbUrl.length() > 5 ? true : false);
 }
 
 void MainWindow::on_loadFinished(bool ok)
 {
-    m_logger.inf("mainwindow: ok(" + QString::number(ok) + "): " + this->ui->webEngineView->url().toString());
+    if (!this->m_pGbWorker)
+        m_logger.log("mainwindow: ok(" + QString::number(ok) + "): " + this->ui->webEngineView->url().toString(), ok ? logger::LogLevel::INF : logger::LogLevel::WRN);
 
-    //TODO: progress>99 -> stop  -> should be ok
     if (/*!ok || */this->m_pGbWorker) {
         this->ui->bConvert->setEnabled(false);
-        if (!ok)
-            this->m_logger.log("mainwindow: load !ok: " + this->ui->webEngineView->url().toString(), logger::LogLevel::WRN);
         return;
     }
-    //TODO: move this logic into GbWorker!?
-    this->ui->webEngineView->page()->toHtml([this](QString html)
+    if (!this->m_pGbWorker)
     {
-        bool gbPage = html.indexOf(__pageContaner) > 9 && html.indexOf(__cardNext) > 9;
-        this->ui->bConvert->setEnabled(gbPage);
-        if (!gbPage) this->m_logger.log("mainwindow: URL not supported", logger::LogLevel::WRN);
-    });
+        //TODO: move this logic into GbWorker!?
+        this->ui->webEngineView->page()->toHtml([this](QString html)
+        {
+            bool gbPage = html.indexOf(__pageContaner) > 9 && html.indexOf(__cardNext) > 9;
+            this->ui->bConvert->setEnabled(gbPage);
+            if (!gbPage) this->m_logger.log("mainwindow: URL not supported", logger::LogLevel::WRN);
+        });
+    }
 }
 
 void MainWindow::scrapFinished(QString sFN)
 {
-    this->m_logger.log("mainwindow: FINISH: " + sFN, logger::LogLevel::INF);
     disconnect(this->m_pGbWorker, SIGNAL(scrapFinished(QString)), this, SLOT(on_loadFinished(bool)));
     this->m_pGbWorker->deleteLater();
     this->m_pGbWorker = nullptr;
@@ -106,7 +107,12 @@ void MainWindow::scrapFinished(QString sFN)
     this->on_eGbUrl_textChanged(sUrl);
 
     this->ui->tabWidget->setCurrentIndex(1);
-    this->ui->webEngineViewOffline->setUrl(QUrl(sFN));
+
+    QUrl urlFN = QUrl::fromLocalFile(sFN);  //required pattern; file:///C:/temp/12904/1588668531602.htm
+    this->m_logger.log("mainwindow: FINISH: fn: " + sFN, logger::LogLevel::INF);
+    this->m_logger.log("mainwindow: FINISH: url:" + urlFN.toString(), logger::LogLevel::INF);
+
+    this->ui->webEngineViewOffline->setUrl(urlFN);
 }
 
 void MainWindow::on_loadStarted()

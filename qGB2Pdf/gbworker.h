@@ -3,9 +3,11 @@
 
 #include <QFile>
 #include <QObject>
+#include <QTimer>
 #include <QWebEngineView>
 #include "util/cfg.h"
 #include "util/logger.h"
+#include "gbwriter.h"
 
 class GbWorker : public QObject
 {
@@ -19,9 +21,9 @@ protected:
 protected:
     QWebEngineView* m_pWebEngineView;
     QString m_sgb2pdf_js;
-    QFile m_fScrapedContent;
-    QString m_sScrapedFN;
-    QTextStream m_sScrapedContent;
+
+    GbWriter m_gbWriter;
+    QTimer m_loadFinishedTimer;
 
     int m_iPage;
 
@@ -35,6 +37,7 @@ public slots:
     void clickNextPage();
     void on_loadStarted();
     void on_loadProgress(int progress);
+    void on_JsInjected();
 
 signals:
     void scrapFinished(QString sFN);
