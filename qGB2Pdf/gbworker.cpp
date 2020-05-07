@@ -21,9 +21,9 @@ GbWorker::GbWorker(QObject *parent, QWebEngineView* pWebEngineView, logger* pLog
         m_loadFinishedTimer.setInterval(1999);
         m_loadFinishedTimer.setSingleShot(true);
         connect(&m_loadFinishedTimer, &QTimer::timeout, [this]() {
+            m_loadFinishedTimer.stop();
             m_pLogger->inf("gbWorker:m_loadFinishedTimer timeout -> on_loadFinished(true)");
             this->on_loadFinished(true);
-            m_pLogger->inf("gbWorker:m_loadFinishedTimer timeout -> on_loadFinished(true) called");
         });
         m_loadFinishedTimer.stop();
     }
@@ -93,7 +93,7 @@ void GbWorker::endScraping()
         //TODO: catch stdout & stderr?
         //TODO: check first if exe & html exist
         int iExitCode = QProcess::execute(sExe, params);
-        m_pLogger->log("gbWorker:endScraping iExitCode:" + QString::number(iExitCode)+" > " + sPdfAbsFn, iExitCode == 0 ? logger::LogLevel::INF : logger::LogLevel::WRN);
+        m_pLogger->log("gbWorker:endScraping iExitCode:" + QString::number(iExitCode)+" -> " + sPdfAbsFn, iExitCode == 0 ? logger::LogLevel::INF : logger::LogLevel::WRN);
         QDesktopServices::openUrl(QUrl::fromLocalFile(sPdfAbsFn));
     }
     //TODO: convert local collected html to PDF! with wkhtmlto... lib or dll.!?
@@ -124,7 +124,7 @@ void GbWorker::on_loadFinished(bool ok)
 }
 void GbWorker::on_JsInjected()
 {
-    m_pLogger->inf("gbWorker: js injected -> getPageContainer! url:" + this->m_pWebEngineView->url().toString());
+    //m_pLogger->inf("gbWorker: js injected -> getPageContainer! url:" + this->m_pWebEngineView->url().toString());
 
     //TODO: def js function name
     this->m_pWebEngineView->page()->runJavaScript("getPageContainer('" + __pageContaner + "');", [this](const QVariant &v) {
@@ -144,7 +144,7 @@ void GbWorker::on_JsInjected()
             {
                 qDebug() << v;
             }
-            m_pLogger->inf("gbWorker: scraping page" + QString::number(m_iPage) + ", " + this->m_pWebEngineView->url().toString());
+            m_pLogger->inf("gbWorker: scraping page " + QString::number(m_iPage) + ", " + this->m_pWebEngineView->url().toString());
         }
 
         /*TODO: remove this code (better: control by cfg)
@@ -163,7 +163,7 @@ void GbWorker::on_JsInjected()
 
 void GbWorker::clickNextPage()
 {
-    m_pLogger->inf("gbWorker: trying to click next: " + this->m_pWebEngineView->url().toString());
+    //m_pLogger->inf("gbWorker: trying to click next: " + this->m_pWebEngineView->url().toString());
     //TODO: def js function name
     this->m_pWebEngineView->page()->runJavaScript("clickCardNext('" + __cardNext + "');", [this](const QVariant &v) {
         bool clicked = v.toBool();
@@ -175,7 +175,7 @@ void GbWorker::clickNextPage()
         }
         else
         {
-            m_pLogger->inf("gbWorker: next link clicked: " + this->m_pWebEngineView->url().toString());
+            //m_pLogger->inf("gbWorker: next link clicked: " + this->m_pWebEngineView->url().toString());
         }
     });
 }
@@ -186,9 +186,10 @@ void GbWorker::on_loadStarted()
 
 void GbWorker::on_loadProgress(int progress)
 {
-    //TODO: call directyle here onLoadFinished(true) & ->stop there within the function!
+    //TODO: call directyle here onLoadFinished(true) & ->stop there within the function!?
     if (progress > 99)
     {
+        //TODO: why is called on_loadProgress(100) twice?
         m_pLogger->log("gbWorker: Loaded! ... " + QString::number(progress) + "%", logger::LogLevel::INF);
         m_loadFinishedTimer.stop();
         m_loadFinishedTimer.start();

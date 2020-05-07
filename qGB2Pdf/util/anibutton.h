@@ -14,6 +14,7 @@ public:
     explicit anibutton(QWidget *parent = 0);
 
     bool setani(QString sRes);
+    QMovie* m_pMovie;
 
 signals:
 

@@ -3,6 +3,4 @@
 
 <img src=qGB2Pdf.png width="550px">
 
-## TODO:
-* generate binary release package
-* animate while download and processing is running
+<img src=qGB2Pdf.gif width="550px">

@@ -2,5 +2,7 @@
     <qresource prefix="/">
         <file>res/gb.png</file>
         <file>res/gb2pdf.js</file>
+        <file>res/wait.gif</file>
+        <file>res/boring.gif</file>
     </qresource>
 </RCC>

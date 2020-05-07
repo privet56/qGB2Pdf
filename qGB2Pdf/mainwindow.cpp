@@ -3,6 +3,7 @@
 #include "def.h"
 
 #include <QCloseEvent>
+#include <QDirIterator>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -33,6 +34,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this->ui->webEngineView, SIGNAL(loadProgress(int)), this, SLOT(on_loadProgress(int)));
     connect(this->ui->webEngineView, SIGNAL(urlChanged(QUrl)), this, SLOT(on_urlChanged(QUrl)));
     void urlChanged(const QUrl&);
+
+    this->ui->bRunning->setCheckable(true);
+    this->ui->bRunning->setChecked(true);
+    this->ui->bRunning->setani(":/res/boring.gif");
+    this->ui->bRunning->setEnabled(false);
+
+
+    //checkQrc();
 }
 
 void MainWindow::closeEvent(QCloseEvent *evt)
@@ -66,6 +75,8 @@ void MainWindow::on_bConvert_clicked()
     m_pGbWorker->startScrapingWithCurrentPage();
     this->ui->bConvert->setEnabled(false);
     this->ui->eGbUrl->setEnabled(true);
+    this->ui->bRunning->setani(":/res/wait.gif");
+    this->ui->bRunning->setEnabled(true);
 }
 
 void MainWindow::on_eGbUrl_textChanged(const QString &gbUrl)
@@ -112,7 +123,10 @@ void MainWindow::scrapFinished(QString sFN)
     this->m_logger.log("mainwindow: FINISH: fn: " + sFN, logger::LogLevel::INF);
     this->m_logger.log("mainwindow: FINISH: url:" + urlFN.toString(), logger::LogLevel::INF);
 
+    //TODO: load animation while loading huge offline file!
     this->ui->webEngineViewOffline->setUrl(urlFN);
+    this->ui->bRunning->setani(":/res/boring.gif");
+    this->ui->bRunning->setEnabled(false);
 }
 
 void MainWindow::on_loadStarted()
@@ -133,6 +147,27 @@ void MainWindow::on_loadProgress(int progress)
 void MainWindow::on_urlChanged(QUrl url)
 {
     this->ui->eGbUrl->setText(url.toString());
+}
+
+void MainWindow::checkQrc()
+{
+    QDirIterator it(":/res", QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        qDebug() << it.next();
+    }
+
+    QString sRes(":/res/gb2pdf.js");
+    //QString sRes(":/res/gb.png");
+
+    QFile file(sRes);
+    if(!file.open(QIODevice::ReadOnly)) {
+        //should never happen, as file is in resources
+        this->m_logger.err("mainwindows:checkQrc "+sRes+" file not opened");
+        return;
+    }
+    QString s = file.readAll();
+    file.close();
+    this->m_logger.log("mainwindows:checkQrc read: " + QString::number(s.length()), s.length() > 0 ? logger::LogLevel::INF : logger::LogLevel::ERR);
 }
 
 //TODO: no [x] when working!

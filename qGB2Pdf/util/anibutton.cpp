@@ -1,22 +1,31 @@
 #include "anibutton.h"
 
-anibutton::anibutton(QWidget *parent) : QPushButton(parent)
+anibutton::anibutton(QWidget *parent) : QPushButton(parent), m_pMovie(nullptr)
 {
 
 }
 
 bool anibutton::setani(QString sRes)
 {
-    QMovie* pMovie = new QMovie(sRes);
-    connect(pMovie,SIGNAL(frameChanged(int)),this,SLOT(setButtonIcon(int)));
-    if (pMovie->loopCount() != -1) //if movie doesn't loop forever, force it to
-        connect(pMovie,SIGNAL(finished()),pMovie,SLOT(start()));
-    pMovie->start();
-    if(!pMovie->isValid())
+    if (m_pMovie)
+    {
+        m_pMovie->stop();
+        disconnect(m_pMovie,SIGNAL(frameChanged(int)),this,SLOT(setButtonIcon(int)));
+        disconnect(m_pMovie,SIGNAL(finished()),m_pMovie,SLOT(start()));
+        m_pMovie->deleteLater();
+        m_pMovie = nullptr;
+    }
+
+    m_pMovie = new QMovie(sRes);
+    connect(m_pMovie,SIGNAL(frameChanged(int)),this,SLOT(setButtonIcon(int)));
+    if (m_pMovie->loopCount() != -1) //if movie doesn't loop forever, force it to
+        connect(m_pMovie,SIGNAL(finished()),m_pMovie,SLOT(start()));
+    m_pMovie->start();
+    if(!m_pMovie->isValid())
     {
         //TODO: log correctly!
         //helpers::log("anibutton:setani NOT.ok("+sRes+"):"+QString::number(pMovie->isValid()), LOG_WRN, qApp, 0);
-        qDebug()<<QImageReader::supportedImageFormats();
+        qDebug() << QImageReader::supportedImageFormats();
         return false;
     }
     return true;

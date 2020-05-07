@@ -28,6 +28,7 @@ protected:
 
 protected:
     void closeEvent(QCloseEvent *evt);
+    void checkQrc();
 
 private slots:
     void on_eGbUrl_returnPressed();

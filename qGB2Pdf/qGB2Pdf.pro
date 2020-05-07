@@ -1,5 +1,8 @@
 QT       += core gui webenginewidgets webengine
 
+# https://stackoverflow.com/questions/59334679/qt-resources-loads-empty-js-files
+CONFIG -= qtquickcompiler
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 CONFIG += c++11

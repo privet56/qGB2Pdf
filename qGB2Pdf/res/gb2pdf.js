@@ -31,7 +31,7 @@ function getPageContainer(classNamePart) {
         if(!s)
             s = div.innerHTML;
         if (s) {
-            return s + "<!-- cnt-end -->";
+            return s;
         }
     }
     return log("WRN: content not found class:'" + classNamePart + "' div:'"+div+"' s:'"+s+"' url:" + window.location.href);
