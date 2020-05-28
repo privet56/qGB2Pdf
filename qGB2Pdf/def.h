@@ -3,6 +3,7 @@
 
 #define __pageContaner QString("pageContainer")
 #define __cardNext QString("cardNext")
+#define __cssFN QString("res/css.css")
 
 #include <QObject>
 

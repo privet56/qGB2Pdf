@@ -25,6 +25,8 @@ public:
 
     static QString getResFn(QString sRelFN);
 
+    static bool write(QString& sFN, QString& sFC, logger* pLog=nullptr);
+
 signals:
 
 public slots:

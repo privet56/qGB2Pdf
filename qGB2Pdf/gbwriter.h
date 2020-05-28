@@ -16,6 +16,7 @@ public:
     QString gbOpen();
     QString getAbsFN();
     bool write(QString s);
+    bool writeCss();
     bool close();
 
 protected:

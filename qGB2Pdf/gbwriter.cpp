@@ -6,6 +6,7 @@
 #include <QTimer>
 #include "def.h"
 #include "util/str.h"
+#include "util/f.h"
 
 GbWriter::GbWriter(QObject *parent, logger* pLogger) : QObject(parent), m_pLogger(pLogger)
 {
@@ -40,6 +41,14 @@ bool GbWriter::write(QString s)
     }
     m_stream << s;
     return true;
+}
+bool GbWriter::writeCss()
+{
+    QString sCssFC = f::getFC(f::getResFn(__cssFN));
+    QString sCssFN = str::makeAbsFN(str::getDir(m_sAbsFN), str::getFN(__cssFN));
+    bool b = f::write(sCssFN, sCssFC);
+    m_pLogger->log("gbWriter:writeCSS:" + sCssFN, b ? logger::LogLevel::INF : logger::LogLevel::WRN);
+    return b;
 }
 bool GbWriter::close()
 {

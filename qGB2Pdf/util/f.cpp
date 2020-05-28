@@ -98,7 +98,7 @@ void f::emptydir(QString sDir, QString sPattern, bool bRecursive, int& iDeleteds
 QString f::getFC(QString sAbsFN, logger* pLog/*=nullptr*/)
 {
     QFile f(sAbsFN);
-    if(!f.exists())
+    if(!sAbsFN.startsWith(':') && !f.exists())
     {
         if(pLog)pLog->wrn("GetFC fnf:"+sAbsFN);
         return "";
@@ -140,4 +140,21 @@ QString f::getResFn(QString sRelFN)
     if(!sRelFN.startsWith('/'))
         return ":/"+sRelFN;
     return ":"+sRelFN;
+}
+
+bool f::write(QString& sFN, QString& sFC, logger* pLog/*=nullptr*/)
+{
+    QFile file(sFN);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text))
+    {
+        if(pLog)pLog->wrn("write !open:"+sFN);
+        return false;
+    }
+
+    QTextStream out(&file);
+    out << sFC;
+    out.flush();
+    file.flush();
+    file.close();
+    return true;
 }

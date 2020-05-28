@@ -62,9 +62,10 @@ void GbWorker::startScrapingWithCurrentPage()
         int iBody = shtml.indexOf("<body");
         QString sHead = sHtml.left(iBody);
         sHead = sHead.replace("background: #","backgroundDeactivated: #");
+        sHead = sHead.replace("font-size","font--size");
         //TODO: do i need <base href?
         m_gbWriter.write(sHead);
-        m_gbWriter.write("\n<body>");
+        m_gbWriter.write("\n<body><link rel='stylesheet' href='" + str::getFN(__cssFN) + "'>");
 
         on_loadFinished(true);
     });
@@ -74,6 +75,7 @@ void GbWorker::endScraping()
 {
     m_loadFinishedTimer.stop();
 
+    m_gbWriter.writeCss();
     m_gbWriter.write("\n</body></html>");
     m_gbWriter.close();
     disconnect(this->m_pWebEngineView, SIGNAL(loadFinished(bool)), this, SLOT(on_loadFinished(bool)));
