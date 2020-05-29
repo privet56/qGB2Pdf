@@ -58,15 +58,7 @@ void GbWorker::startScrapingWithCurrentPage()
 
     this->m_pWebEngineView->page()->toHtml([this](QString sHtml)
     {
-        QString shtml(sHtml.toLower());
-        int iBody = shtml.indexOf("<body");
-        QString sHead = sHtml.left(iBody);
-        sHead = sHead.replace("background: #","backgroundDeactivated: #");
-        sHead = sHead.replace("font-size","font--size");
-        //TODO: do i need <base href?
-        m_gbWriter.write(sHead);
-        m_gbWriter.write("\n<body><link rel='stylesheet' href='" + str::getFN(__cssFN) + "'>");
-
+        m_gbWriter.writeHead(sHtml);
         on_loadFinished(true);
     });
 }
@@ -75,9 +67,8 @@ void GbWorker::endScraping()
 {
     m_loadFinishedTimer.stop();
 
-    m_gbWriter.writeCss();
-    m_gbWriter.write("\n</body></html>");
-    m_gbWriter.close();
+    m_gbWriter.writeEndAndClose();
+
     disconnect(this->m_pWebEngineView, SIGNAL(loadFinished(bool)), this, SLOT(on_loadFinished(bool)));
     disconnect(this->m_pWebEngineView, SIGNAL(loadStarted()),      this, SLOT(on_loadStarted()));
     disconnect(this->m_pWebEngineView, SIGNAL(loadProgress(int)),  this, SLOT(on_loadProgress(int)));
@@ -149,17 +140,7 @@ void GbWorker::on_JsInjected()
             m_pLogger->inf("gbWorker: scraping page " + QString::number(m_iPage) + ", " + this->m_pWebEngineView->url().toString());
         }
 
-        /*TODO: remove this code (better: control by cfg)
-        if (m_iPage > 3)
-        {
-            m_pLogger->wrn("gbWorker: breaking: " + this->m_pWebEngineView->url().toString());
-            this->endScraping();
-            return;
-        }
-        else*/
-        {
-            QTimer::singleShot(999/*ms*/, this, SLOT(clickNextPage()));
-        }
+        QTimer::singleShot(999/*ms*/, this, SLOT(clickNextPage()));
     });
 }
 
@@ -177,7 +158,19 @@ void GbWorker::clickNextPage()
         }
         else
         {
-            //m_pLogger->inf("gbWorker: next link clicked: " + this->m_pWebEngineView->url().toString());
+            /*TODO: remove this code (better: control by cfg)
+            if (m_iPage > 1)
+            {
+                m_loadFinishedTimer.stop();
+                this->m_pWebEngineView->stop();
+                m_pLogger->wrn("gbWorker: breaking: " + this->m_pWebEngineView->url().toString());
+                this->endScraping();
+                return;
+            }
+            else //*/
+            {
+                //m_pLogger->inf("gbWorker: next link clicked: " + this->m_pWebEngineView->url().toString());
+            }
         }
     });
 }

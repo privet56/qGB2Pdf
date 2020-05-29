@@ -6,21 +6,22 @@
 #include <QTextStream>
 #include "util/cfg.h"
 #include "util/logger.h"
+#include "filewriter.h"
 
-class GbWriter : public QObject
+class GbWriter : public FileWriter
 {
     Q_OBJECT
 public:
     explicit GbWriter(QObject *parent, logger* pLogger);
 public:
     QString gbOpen();
-    QString getAbsFN();
-    bool write(QString s);
-    bool writeCss();
-    bool close();
+    virtual bool close();
+
+    bool writeHead(QString sHtmlBlueprint);
+    bool writeEndAndClose();
 
 protected:
-    logger* m_pLogger;
+    bool writeCss();
 protected:
     QFile m_File;
     QString m_sAbsFN;

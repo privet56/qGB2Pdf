@@ -20,6 +20,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     def.cpp \
+    filewriter.cpp \
     gbworker.cpp \
     gbwriter.cpp \
     main.cpp \
@@ -38,6 +39,7 @@ SOURCES += \
 
 HEADERS += \
     def.h \
+    filewriter.h \
     gbworker.h \
     gbwriter.h \
     mainwindow.h \

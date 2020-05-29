@@ -8,7 +8,7 @@
 #include "util/str.h"
 #include "util/f.h"
 
-GbWriter::GbWriter(QObject *parent, logger* pLogger) : QObject(parent), m_pLogger(pLogger)
+GbWriter::GbWriter(QObject *parent, logger* pLogger) : FileWriter(parent, pLogger)
 {
 
 }
@@ -17,48 +17,43 @@ QString GbWriter::gbOpen()
     QDir dir(QDir::tempPath());
     QString sSubDir = QString::number(QCoreApplication::applicationPid());
     if(!dir.mkdir(sSubDir))  {
-        m_pLogger->err("gbWriter: !mkdir: " + sSubDir);
+        m_pLogger->err("GbWriter:GbOpen !mkdir: " + sSubDir);
     }
+
     m_sAbsFN = str::makeAbsFN(QDir::tempPath(), sSubDir);
     m_sAbsFN = str::makeAbsFN(m_sAbsFN, QString::number(QDateTime::currentMSecsSinceEpoch()) + ".htm");
-    m_File.setFileName(m_sAbsFN);
-    if(!m_File.open(QIODevice::WriteOnly | QIODevice::Truncate | QIODevice::Text)) {
-        m_pLogger->err("gbWriter: !open: " + m_sAbsFN);
-    }
-    m_stream.setDevice(&m_File);
+
+    FileWriter::open(m_sAbsFN);
     return this->m_sAbsFN;
 }
-QString GbWriter::getAbsFN()
+bool GbWriter::writeEndAndClose()
 {
-    return this->m_sAbsFN;
+    this->writeCss();
+    this->write("\n</body></html>");
+    bool b = this->close();
+    return b;
+
 }
-bool GbWriter::write(QString s)
+bool GbWriter::writeHead(QString sHtmlBlueprint)
 {
-    if(!this->m_File.isOpen())
-    {
-        m_pLogger->err("gbWriter:write: !open: " + m_sAbsFN);
-        return false;
-    }
-    m_stream << s;
-    return true;
+    QString shtml(sHtmlBlueprint.toLower());
+    int iBody = shtml.indexOf("<body");
+    QString sHead = sHtmlBlueprint.left(iBody);
+    sHead = sHead.replace("background: #","backgroundDeactivated: #");
+    sHead = sHead.replace("font-size","font--size");
+    //TODO: do i need <base href?
+    this->write(sHead);
+    return this->write("\n<body><link rel='stylesheet' href='" + str::getFN(__cssFN) + "'>");
 }
 bool GbWriter::writeCss()
 {
     QString sCssFC = f::getFC(f::getResFn(__cssFN));
     QString sCssFN = str::makeAbsFN(str::getDir(m_sAbsFN), str::getFN(__cssFN));
     bool b = f::write(sCssFN, sCssFC);
-    m_pLogger->log("gbWriter:writeCSS:" + sCssFN, b ? logger::LogLevel::INF : logger::LogLevel::WRN);
+    m_pLogger->log(this->getClassName() + ":writeCSS:" + sCssFN, b ? logger::LogLevel::INF : logger::LogLevel::WRN);
     return b;
 }
 bool GbWriter::close()
 {
-    if(!this->m_File.isOpen())
-    {
-        m_pLogger->err("gbWriter:close: !open: " + m_sAbsFN);
-        return false;
-    }
-
-    this->m_File.flush();
-    this->m_File.close();
-    return true;
+    return FileWriter::close();
 }
