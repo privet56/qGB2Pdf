@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "gbworker.h"
+#include "tumbler.h"
 
 #include "util/cfg.h"
 #include "util/logger.h"
@@ -23,6 +24,7 @@ public:
 
 protected:
     GbWorker* m_pGbWorker;
+    Tumbler* m_pTumbler;
     logger m_logger;
     cfg m_cfg;
 

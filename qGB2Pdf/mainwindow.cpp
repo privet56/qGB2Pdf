@@ -8,6 +8,7 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , m_pGbWorker(nullptr)
+    , m_pTumbler(nullptr)
     , m_logger(nullptr, nullptr, this)
     , m_cfg(this)
     , ui(new Ui::MainWindow)
@@ -40,8 +41,9 @@ MainWindow::MainWindow(QWidget *parent)
     this->ui->bRunning->setani(":/res/boring.gif");
     this->ui->bRunning->setEnabled(false);
 
-
     //checkQrc();
+    //m_pTumbler = new Tumbler(this, this->ui->webEngineView, &this->m_logger);
+    //m_pTumbler->dwnld("pinayfarang");
 }
 
 void MainWindow::closeEvent(QCloseEvent *evt)

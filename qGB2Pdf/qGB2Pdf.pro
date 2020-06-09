@@ -1,4 +1,4 @@
-QT       += core gui webenginewidgets webengine
+QT       += core gui webenginewidgets webengine network xml
 
 # https://stackoverflow.com/questions/59334679/qt-resources-loads-empty-js-files
 CONFIG -= qtquickcompiler
@@ -25,6 +25,7 @@ SOURCES += \
     gbwriter.cpp \
     main.cpp \
     mainwindow.cpp \
+    tumbler.cpp \
     util/anibutton.cpp \
     util/anilabel.cpp \
     util/cfg.cpp \
@@ -45,6 +46,7 @@ HEADERS += \
     mainwindow.h \
     res.rc \
     resource.h \
+    tumbler.h \
     util/anibutton.h \
     util/anilabel.h \
     util/cfg.h \
